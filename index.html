@@ -1,1 +1,1564 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aprendizaje Supervisado — Cuaderno de Análisis | UNA Puno</title>
 
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- Highlight.js for code blocks -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/nord.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/r.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+
+<style>
+:root{
+  --navy:#12213B;
+  --navy-2:#1B2F52;
+  --navy-3:#223a63;
+  --paper:#FAF8F3;
+  --paper-2:#F1EDE3;
+  --paper-3:#E8E2D2;
+  --gold:#C89B3C;
+  --gold-light:#E4C878;
+  --terracotta:#B0413E;
+  --terracotta-light:#d98a87;
+  --teal:#2F6F62;
+  --teal-light:#8fc4b8;
+  --ink:#1E1B16;
+  --muted:#6B6559;
+  --line: rgba(18,33,59,0.12);
+  --radius: 10px;
+}
+
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  font-size:16px;
+  line-height:1.6;
+}
+
+::selection{ background:var(--gold-light); color:var(--navy);}
+
+/* ============ LAYOUT ============ */
+.app{
+  display:grid;
+  grid-template-columns: 280px 1fr;
+  min-height:100vh;
+}
+
+/* ---------- SIDEBAR ---------- */
+.sidebar{
+  background: var(--navy);
+  color:#EDE7D6;
+  position:sticky;
+  top:0;
+  height:100vh;
+  padding:28px 22px 22px;
+  display:flex;
+  flex-direction:column;
+  border-right:1px solid rgba(228,200,120,0.15);
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:6px;
+}
+.brand .mark{
+  width:38px;height:38px;border-radius:50%;
+  background: conic-gradient(from 200deg, var(--gold), var(--terracotta), var(--teal), var(--gold));
+  flex:none;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Fraunces',serif; font-weight:700; color:var(--navy); font-size:14px;
+  box-shadow: 0 0 0 3px rgba(228,200,120,0.18);
+}
+.brand-text{
+  font-family:'Fraunces',serif;
+  font-size:15px;
+  line-height:1.25;
+  letter-spacing:.2px;
+}
+.brand-text b{ display:block; font-weight:600; color:#fff; font-size:16.5px;}
+.brand-text span{ color:#B9AF8E; font-size:12px; text-transform:uppercase; letter-spacing:.08em;}
+
+.sidebar-meta{
+  margin-top:18px;
+  padding:14px 14px;
+  background: rgba(255,255,255,0.045);
+  border:1px solid rgba(228,200,120,0.16);
+  border-radius: var(--radius);
+  font-size:12.6px;
+  color:#C7BFA6;
+}
+.sidebar-meta div{ display:flex; justify-content:space-between; gap:8px; padding:3px 0;}
+.sidebar-meta b{ color:#F1E8CC; font-weight:600; text-align:right;}
+
+.nav{ margin-top:26px; display:flex; flex-direction:column; gap:4px; flex:1;}
+.nav-label{
+  font-size:10.5px; text-transform:uppercase; letter-spacing:.14em; color:#8C8368;
+  margin: 6px 4px 8px;
+}
+.nav a{
+  display:flex; align-items:center; gap:12px;
+  color:#D9D2BB;
+  text-decoration:none;
+  padding:11px 12px;
+  border-radius:8px;
+  font-size:14.5px;
+  font-weight:500;
+  border:1px solid transparent;
+  transition: background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease;
+}
+.nav a .num{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:#8C8368;
+  width:20px;
+}
+.nav a:hover{ background: rgba(255,255,255,0.05); color:#fff; transform: translateX(2px);}
+.nav a.active{
+  background: linear-gradient(90deg, rgba(200,155,60,0.22), rgba(200,155,60,0.03));
+  border-color: rgba(228,200,120,0.35);
+  color:#fff;
+}
+.nav a.active .num{ color:var(--gold-light); }
+
+.sidebar-footer{
+  margin-top:auto;
+  padding-top:16px;
+  border-top:1px solid rgba(228,200,120,0.14);
+  font-size:11.5px;
+  color:#78715A;
+  line-height:1.5;
+}
+
+/* ---------- MAIN ---------- */
+main{ position:relative; min-height:100vh; }
+
+.view{ display:none; }
+.view.active{ display:block; animation: fadeIn .4s ease; }
+@keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+/* Grid paper texture band used as signature motif */
+.ledger{
+  position:relative;
+  background:
+    linear-gradient(rgba(18,33,59,0.055) 1px, transparent 1px) 0 0/26px 26px,
+    linear-gradient(90deg, rgba(18,33,59,0.055) 1px, transparent 1px) 0 0/26px 26px,
+    var(--paper-2);
+  border-bottom:1px solid var(--line);
+  padding: 46px 56px 40px;
+}
+.ledger .eyebrow{
+  font-family:'JetBrains Mono',monospace;
+  font-size:12.5px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--teal);
+  display:flex; align-items:center; gap:10px;
+}
+.ledger .eyebrow::before{ content:""; width:26px; height:1px; background:var(--teal);}
+.ledger h1{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:44px;
+  margin:10px 0 12px;
+  color:var(--navy);
+  max-width: 900px;
+  letter-spacing:-0.01em;
+}
+.ledger p.lede{
+  max-width:680px;
+  color:var(--muted);
+  font-size:16.5px;
+}
+
+.stamp-row{
+  display:flex; gap:14px; flex-wrap:wrap; margin-top:26px;
+}
+.stamp{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:10px;
+  padding:12px 18px;
+  min-width:150px;
+  box-shadow: 2px 3px 0 rgba(18,33,59,0.06);
+}
+.stamp .v{ font-family:'Fraunces',serif; font-weight:600; font-size:24px; color:var(--navy);}
+.stamp .l{ font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.06em; margin-top:2px;}
+.stamp.gold{ border-color: rgba(200,155,60,0.5); }
+.stamp.teal .v{ color:var(--teal); }
+.stamp.terracotta .v{ color:var(--terracotta); }
+
+/* content sections */
+.section{ padding: 46px 56px; border-bottom:1px solid var(--line);}
+.section:last-child{ border-bottom:none; }
+.section h2{
+  font-family:'Fraunces',serif;
+  font-size:27px;
+  font-weight:600;
+  color:var(--navy);
+  margin:0 0 6px;
+  display:flex; align-items:baseline; gap:12px;
+}
+.section h2 .idx{
+  font-family:'JetBrains Mono',monospace;
+  font-size:14px; color:var(--gold); font-weight:600;
+}
+.section h3{
+  font-family:'Fraunces',serif;
+  font-size:18.5px;
+  font-weight:600;
+  color:var(--navy);
+  margin: 26px 0 10px;
+}
+.section .kicker{
+  color:var(--muted);
+  font-size:14px;
+  margin-bottom:22px;
+  max-width:760px;
+}
+.prose p{ color:#3B362E; max-width: 840px; }
+.prose ul{ color:#3B362E; max-width:820px; padding-left:20px;}
+.prose li{ margin-bottom:6px;}
+.prose strong{ color:var(--navy); }
+
+.two-col{
+  display:grid; grid-template-columns: 1.05fr 0.95fr; gap:30px; margin-top:18px;
+  align-items:start;
+}
+@media (max-width:1100px){ .two-col{ grid-template-columns:1fr; } }
+
+.card{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius: var(--radius);
+  padding:20px 22px;
+}
+.card h4{
+  margin:0 0 14px;
+  font-family:'Inter',sans-serif;
+  font-weight:700;
+  font-size:13px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:var(--navy);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.card h4 .tag{
+  font-family:'JetBrains Mono',monospace;
+  font-weight:500;
+  font-size:10.5px;
+  color:var(--muted);
+  text-transform:none;
+  letter-spacing:0;
+}
+
+.chart-wrap{ position:relative; height:280px; }
+.chart-wrap.short{ height:220px; }
+
+/* confusion matrix heat tables */
+.conf-table{ width:100%; border-collapse:collapse; font-size:13.5px; margin-top:4px;}
+.conf-table th{
+  font-family:'JetBrains Mono',monospace; font-weight:500; font-size:11px;
+  color:var(--muted); text-transform:uppercase; letter-spacing:.04em;
+  padding:6px 8px; text-align:center;
+}
+.conf-table td{
+  text-align:center; padding:14px 10px; font-family:'JetBrains Mono',monospace;
+  font-weight:600; font-size:16px; border-radius:6px; color:#fff;
+}
+.conf-table td.axis-label{
+  color:var(--muted); font-weight:500; font-size:11px; background:none;
+}
+.conf-table .diag{ background: var(--teal); }
+.conf-table .off{ background: var(--terracotta); opacity:.82;}
+.conf-note{ font-size:12px; color:var(--muted); margin-top:10px;}
+
+/* code blocks */
+.code-block{
+  margin:14px 0 22px;
+  border-radius:10px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,0.06);
+  background:#0f1c30;
+}
+.code-head{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:9px 16px;
+  background: var(--navy-3);
+  color:#C7D5EA;
+  font-family:'JetBrains Mono',monospace;
+  font-size:11.5px;
+  letter-spacing:.03em;
+}
+.code-head .dots{ display:flex; gap:6px; }
+.code-head .dots span{ width:9px;height:9px;border-radius:50%; display:inline-block; }
+.code-head .dots span:nth-child(1){ background:#e6716b;}
+.code-head .dots span:nth-child(2){ background:#e8c15a;}
+.code-head .dots span:nth-child(3){ background:#66c290;}
+pre{ margin:0; padding:18px 20px; overflow-x:auto; font-size:12.6px; line-height:1.65;}
+code{ font-family:'JetBrains Mono',monospace; }
+
+.step-note{
+  border-left:3px solid var(--gold);
+  background: var(--paper-2);
+  padding:12px 16px;
+  border-radius: 0 8px 8px 0;
+  font-size:13.6px;
+  color:#3B362E;
+  margin: 10px 0 24px;
+}
+.step-note b{ color:var(--navy); }
+.step-note ul{ margin:8px 0 0; padding-left:18px; }
+.step-note li{ margin-bottom:5px; }
+.step-note code{ background:rgba(18,33,59,0.08); padding:1px 5px; border-radius:4px; font-size:12px;}
+
+/* pdf viewer */
+.pdf-frame-wrap{
+  border:1px solid var(--line);
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow: 0 10px 30px -18px rgba(18,33,59,0.4);
+  margin-top:8px;
+}
+.pdf-frame-head{
+  background:var(--navy);
+  color:#EDE7D6;
+  padding:11px 18px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:12px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+.pdf-frame-head a{ color:var(--gold-light); text-decoration:none; }
+.pdf-frame-head a:hover{ text-decoration:underline; }
+iframe.pdf-embed{ width:100%; height:640px; border:none; display:block; background:#525659; }
+
+/* pill list */
+.pill-list{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;}
+.pill{
+  border:1px solid var(--line);
+  background:#fff;
+  border-radius:20px;
+  padding:6px 13px;
+  font-size:12.5px;
+  color:var(--navy);
+  font-family:'JetBrains Mono',monospace;
+}
+.pill b{ color:var(--terracotta); }
+
+/* home cards */
+.home-hero{
+  padding:64px 56px 40px;
+  background:
+    radial-gradient(circle at 82% 12%, rgba(200,155,60,0.16), transparent 45%),
+    linear-gradient(180deg, var(--navy), #0d1830 120%);
+  color:#EDE7D6;
+  position:relative;
+  overflow:hidden;
+}
+.home-hero::after{
+  content:"";
+  position:absolute; inset:0;
+  background:
+    linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px) 0 0/34px 34px,
+    linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px) 0 0/34px 34px;
+  pointer-events:none;
+}
+.home-hero .inner{ position:relative; z-index:1; max-width: 920px; }
+.home-hero .eyebrow{
+  font-family:'JetBrains Mono',monospace; font-size:12.5px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--gold-light); display:flex; align-items:center; gap:10px;
+}
+.home-hero .eyebrow::before{ content:""; width:26px; height:1px; background:var(--gold-light);}
+.home-hero h1{
+  font-family:'Fraunces',serif; font-weight:600; font-size:52px; line-height:1.08;
+  margin:16px 0 18px; letter-spacing:-0.015em;
+}
+.home-hero h1 em{ font-style: italic; color:var(--gold-light); font-weight:500;}
+.home-hero p{ font-size:17px; color:#C7BFA6; max-width:680px; }
+
+.masthead{
+  display:grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:0;
+  margin-top:38px;
+  border-top:1px solid rgba(228,200,120,0.22);
+  padding-top:22px;
+}
+.masthead div{ padding-right:20px; }
+.masthead .k{ font-size:10.5px; text-transform:uppercase; letter-spacing:.1em; color:#8C8368;}
+.masthead .val{ font-family:'Fraunces',serif; font-size:17px; margin-top:5px; color:#fff;}
+
+.home-grid{
+  padding: 50px 56px;
+  display:grid;
+  grid-template-columns: repeat(3,1fr);
+  gap:22px;
+}
+@media (max-width:980px){ .home-grid{ grid-template-columns:1fr; } }
+.project-card{
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:26px 24px;
+  cursor:pointer;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  display:flex; flex-direction:column; gap:12px;
+  position:relative;
+  overflow:hidden;
+}
+.project-card::before{
+  content:"";
+  position:absolute; top:0; left:0; right:0; height:4px;
+  background: var(--accent, var(--gold));
+}
+.project-card:hover{ transform: translateY(-4px); box-shadow: 0 18px 34px -22px rgba(18,33,59,0.45); border-color: rgba(18,33,59,0.22);}
+.project-card .pnum{ font-family:'JetBrains Mono',monospace; color:var(--muted); font-size:12px;}
+.project-card h3{ font-family:'Fraunces',serif; font-size:21px; margin:0; color:var(--navy);}
+.project-card p{ color:var(--muted); font-size:13.8px; margin:0; flex:1;}
+.project-card .metric{
+  display:flex; align-items:baseline; gap:8px; margin-top:6px;
+}
+.project-card .metric b{ font-family:'Fraunces',serif; font-size:28px; color:var(--accent, var(--gold)); }
+.project-card .metric span{ font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:.05em;}
+.project-card .go{ font-size:12.5px; font-weight:600; color:var(--navy); display:flex; align-items:center; gap:6px; margin-top:8px;}
+.project-card .go::after{ content:"→"; transition: transform .18s ease;}
+.project-card:hover .go::after{ transform: translateX(4px); }
+
+.home-context{
+  margin: 0 56px 60px;
+  background: var(--paper-2);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:30px 32px;
+}
+.home-context h3{ font-family:'Fraunces',serif; font-size:19px; color:var(--navy); margin:0 0 10px;}
+.home-context .cols{ display:grid; grid-template-columns:1fr 1fr; gap:26px; margin-top:16px;}
+@media (max-width:900px){ .home-context .cols{ grid-template-columns:1fr; } }
+.home-context ul{ padding-left:18px; color:#3B362E; font-size:14px; }
+.home-context li{ margin-bottom:7px; }
+
+footer.page-footer{
+  padding:26px 56px 40px;
+  color:var(--muted);
+  font-size:12.5px;
+  display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+}
+
+/* mobile nav toggle */
+.mobile-bar{ display:none; }
+@media (max-width: 900px){
+  .app{ grid-template-columns:1fr; }
+  .sidebar{
+    position:fixed; z-index:50; left:0; top:0; width:270px;
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    box-shadow: 20px 0 40px rgba(0,0,0,0.35);
+  }
+  .sidebar.open{ transform:translateX(0); }
+  .mobile-bar{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--navy); color:#fff; padding:14px 18px; position:sticky; top:0; z-index:40;
+  }
+  .mobile-bar button{
+    background:rgba(255,255,255,0.08); border:1px solid rgba(228,200,120,0.3); color:#EDE7D6;
+    padding:8px 12px; border-radius:8px; font-family:'JetBrains Mono',monospace; font-size:12px;
+  }
+  .ledger, .section, .home-hero, .home-grid, .home-context{ padding-left:24px; padding-right:24px;}
+  .home-hero h1{ font-size:36px; }
+  .ledger h1{ font-size:32px; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="mark">UNA</div>
+      <div class="brand-text">
+        <b>Cuaderno de Análisis</b>
+        <span>Aprendizaje Supervisado</span>
+      </div>
+    </div>
+
+    <div class="sidebar-meta">
+      <div><span>Docente</span><b>Carpio Vargas, Edgar Eloy</b></div>
+      <div><span>Sección</span><b>7.º Semestre (Único)</b></div>
+      <div><span>Presenta</span><b>Quispe Holguin, Alexander</b></div>
+      <div><span>Periodo</span><b>2026-I · Puno, Perú</b></div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-label">Navegación</div>
+      <a href="#inicio" class="nav-link active" data-view="inicio"><span class="num">00</span> Inicio · Portada</a>
+      <a href="#discriminante" class="nav-link" data-view="discriminante"><span class="num">01</span> Análisis Discriminante</a>
+      <a href="#logistica" class="nav-link" data-view="logistica"><span class="num">02</span> Regresión Logística Múltiple</a>
+      <a href="#reclasificacion" class="nav-link" data-view="reclasificacion"><span class="num">03</span> Reclasificación de Clientes</a>
+    </nav>
+
+    <div class="sidebar-footer">
+      Escuela Profesional de Ingeniería Estadística e Informática<br>
+      Facultad de Ingeniería Estadística e Informática — UNA Puno
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main>
+
+    <div class="mobile-bar">
+      <b style="font-family:'Fraunces',serif;">Cuaderno de Análisis</b>
+      <button id="menuToggle">☰ Menú</button>
+    </div>
+
+    <!-- ======================================================= -->
+    <!-- VIEW 0 — INICIO                                          -->
+    <!-- ======================================================= -->
+    <section class="view active" id="view-inicio">
+
+      <div class="home-hero">
+        <div class="inner">
+          <div class="eyebrow">Facultad de Ingeniería Estadística e Informática</div>
+          <h1>Tres modelos, <em>un mismo oficio</em>:<br> separar señal de ruido en los datos.</h1>
+          <p>Este cuaderno reúne los tres trabajos aplicados desarrollados para el curso de Aprendizaje
+          Supervisado: clasificación con fronteras lineales y cuadráticas, estimación probabilística con
+          regresión logística, y un caso real de riesgo crediticio. Cada sección incluye el sustento teórico,
+          los resultados comentados, el código reproducible en R y Python, y el informe original en PDF.</p>
+
+          <div class="masthead">
+            <div>
+              <div class="k">Docente responsable</div>
+              <div class="val">Ing. Carpio Vargas, Edgar Eloy</div>
+            </div>
+            <div>
+              <div class="k">Curso · Sección</div>
+              <div class="val">Aprendizaje Supervisado — 7.º Semestre (Único)</div>
+            </div>
+            <div>
+              <div class="k">Presentado por</div>
+              <div class="val">Quispe Holguin, Alexander — Cód. 190179</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="home-grid">
+        <div class="project-card" style="--accent:#2F6F62" onclick="goTo('discriminante')">
+          <div class="pnum">01 / Clasificación académica</div>
+          <h3>Análisis Discriminante (LDA &amp; QDA)</h3>
+          <p>Predicción de aprobación de estudiantes a partir de horas de estudio y nota previa. Comparación
+          de fronteras lineal y cuadrática sobre 500 observaciones.</p>
+          <div class="metric"><b>94.00%</b><span>Accuracy QDA en test</span></div>
+          <div class="go">Abrir informe completo</div>
+        </div>
+
+        <div class="project-card" style="--accent:#C89B3C" onclick="goTo('logistica')">
+          <div class="pnum">02 / Estimación probabilística</div>
+          <h3>Regresión Logística Múltiple</h3>
+          <p>Modelo logit para estimar la probabilidad de aprobar un examen en función de horas de estudio
+          y nota previa, con odds ratios e interpretación completa.</p>
+          <div class="metric"><b>0.951</b><span>AUC (excelente)</span></div>
+          <div class="go">Abrir informe completo</div>
+        </div>
+
+        <div class="project-card" style="--accent:#B0413E" onclick="goTo('reclasificacion')">
+          <div class="pnum">03 / Caso aplicado — riesgo crediticio</div>
+          <h3>Reclasificación de Clientes (LDA)</h3>
+          <p>Discriminante lineal de tres grupos sobre la cartera Cash–Compartamos: 114 clientes, 12
+          variables financieras, para auditar la calificación crediticia vigente.</p>
+          <div class="metric"><b>62.28%</b><span>Accuracy global (LOOCV)</span></div>
+          <div class="go">Abrir informe completo</div>
+        </div>
+      </div>
+
+      <div class="home-context">
+        <h3>Cómo leer este cuaderno</h3>
+        <div class="cols">
+          <div>
+            <ul>
+              <li><b>Resumen ejecutivo</b> — qué problema se resuelve, con qué datos y qué técnica.</li>
+              <li><b>Resultados</b> — matrices de confusión, curvas y coeficientes, con gráficos interactivos.</li>
+              <li><b>Código</b> — los scripts de R (paquete <code style="font-family:'JetBrains Mono',monospace;background:#e9e3d1;padding:1px 5px;border-radius:4px;">MASS</code>) y Python (<code style="font-family:'JetBrains Mono',monospace;background:#e9e3d1;padding:1px 5px;border-radius:4px;">scikit-learn</code>) comentados línea por bloque.</li>
+              <li><b>Documento original</b> — el PDF completo entregado al curso, visor integrado.</li>
+            </ul>
+          </div>
+          <div>
+            <ul>
+              <li>Los tres trabajos comparten el mismo espíritu: contrastar el <b>supuesto teórico</b> de cada
+              modelo (normalidad, homocedasticidad) contra su <b>desempeño real</b> medido con matrices de
+              confusión y validación cruzada.</li>
+              <li>Todos los análisis se documentan con honestidad estadística: cuando un supuesto no se cumple
+              (como ocurre en los tres casos), se reporta igual el desempeño observado en lugar de descartar
+              el modelo.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <footer class="page-footer">
+        <span>Universidad Nacional del Altiplano — Puno, Perú · 2026</span>
+        <span>Escuela Profesional de Ingeniería Estadística e Informática</span>
+      </footer>
+    </section>
+
+    <!-- ======================================================= -->
+    <!-- VIEW 1 — ANÁLISIS DISCRIMINANTE                          -->
+    <!-- ======================================================= -->
+    <section class="view" id="view-discriminante">
+
+      <div class="ledger">
+        <div class="eyebrow">Proyecto 01 · Clasificación supervisada</div>
+        <h1>Análisis Discriminante Lineal y Cuadrático</h1>
+        <p class="lede">Predicción de aprobación de estudiantes (Pass/Fail) a partir de horas de estudio y
+        nota de examen previo, comparando la frontera de decisión recta de LDA contra la frontera curva de
+        QDA sobre 500 observaciones.</p>
+
+        <div class="stamp-row">
+          <div class="stamp teal"><div class="v">94.00%</div><div class="l">Accuracy QDA (test)</div></div>
+          <div class="stamp"><div class="v">85.33%</div><div class="l">Accuracy LDA (test)</div></div>
+          <div class="stamp gold"><div class="v">0.987</div><div class="l">AUC QDA</div></div>
+          <div class="stamp"><div class="v">n = 500</div><div class="l">estudiantes, 70/30 split</div></div>
+        </div>
+      </div>
+
+      <!-- Resumen ejecutivo -->
+      <div class="section">
+        <h2><span class="idx">1.1</span> Resumen ejecutivo</h2>
+        <div class="prose">
+          <p>El objetivo del trabajo fue clasificar a estudiantes en <b>Aprobado</b> o <b>Desaprobado</b> usando
+          dos variables predictoras cuantitativas: <code>study_hours</code> (horas dedicadas al estudio) y
+          <code>prev_score</code> (nota de un examen previo). El dataset <code>student_exam_data_new.csv</code>
+          contiene 500 observaciones, con una proporción de clases de 63.2% Desaprobados y 36.8% Aprobados,
+          usada como probabilidad previa (<i>prior</i>) de cada modelo.</p>
+
+          <p>El <b>Análisis Discriminante Lineal (LDA)</b> asume que ambas clases comparten una misma matriz de
+          covarianzas y por lo tanto solo puede trazar una <b>frontera de decisión recta</b> (un hiperplano) entre
+          los grupos. El <b>Análisis Discriminante Cuadrático (QDA)</b> relaja ese supuesto, permitiendo que cada
+          clase tenga su propia matriz de covarianzas, lo que genera una <b>frontera curva</b> capaz de
+          adaptarse a relaciones de interacción entre variables.</p>
+
+          <p>La exploración gráfica reveló que los estudiantes aprobados se concentran en la <b>esquina superior
+          derecha</b> del plano horas de estudio × nota previa — es decir, aprueban principalmente cuando
+          <b>ambas</b> variables son altas simultáneamente. Este patrón de interacción es precisamente lo que
+          un modelo estrictamente lineal no puede capturar bien, y explica por qué QDA termina superando a LDA
+          en todas las métricas evaluadas.</p>
+
+          <p>Ambos modelos se implementaron en paralelo en <b>R</b> (funciones <code>lda()</code> y
+          <code>qda()</code> del paquete <code>MASS</code>) y en <b>Python</b> (clases
+          <code>LinearDiscriminantAnalysis</code> y <code>QuadraticDiscriminantAnalysis</code> de
+          <code>scikit-learn</code>), obteniendo resultados coherentes entre ambos lenguajes.</p>
+        </div>
+
+        <div class="step-note">
+          <b>Sobre los supuestos:</b> la prueba de Shapiro-Wilk mostró falta de normalidad univariante
+          (p &lt; 0.001) en las cuatro combinaciones grupo × variable. Ambos modelos asumen normalidad
+          multivariante dentro de cada clase, pero — siguiendo la literatura citada en el curso
+          (Li, Zhu &amp; Ogihara) — LDA y QDA son razonablemente robustos ante violaciones moderadas de
+          este supuesto, lo cual se confirma en los resultados: ambos modelos logran una capacidad de
+          clasificación aceptable a buena pese al incumplimiento formal.
+        </div>
+      </div>
+
+      <!-- Resultados y gráficas -->
+      <div class="section">
+        <h2><span class="idx">1.2</span> Resultados y gráficas interactivas</h2>
+        <p class="kicker">Reconstrucción interactiva de las métricas reportadas en el capítulo de Resultados
+        del informe (matrices de confusión, accuracy, AUC y regiones de decisión).</p>
+
+        <div class="two-col">
+          <div class="card">
+            <h4>Accuracy — Test set vs. validación cruzada 10-fold <span class="tag">Cuadro 6.3 / 6.4</span></h4>
+            <div class="chart-wrap"><canvas id="chartLdaQdaAccuracy"></canvas></div>
+          </div>
+          <div class="card">
+            <h4>Perfil de desempeño (test, n=150) <span class="tag">radar</span></h4>
+            <div class="chart-wrap"><canvas id="chartLdaQdaRadar"></canvas></div>
+          </div>
+        </div>
+
+        <div class="two-col" style="margin-top:22px;">
+          <div class="card">
+            <h4>Matriz de confusión — LDA <span class="tag">Cuadro 6.1</span></h4>
+            <table class="conf-table">
+              <tr><td></td><th>Predicho: Fail</th><th>Predicho: Pass</th></tr>
+              <tr><th>Real: Fail</th><td class="diag">84</td><td class="off">11</td></tr>
+              <tr><th>Real: Pass</th><td class="off">11</td><td class="diag">44</td></tr>
+            </table>
+            <div class="conf-note">Error de clasificación: 14.67% · Accuracy: 85.33%</div>
+          </div>
+          <div class="card">
+            <h4>Matriz de confusión — QDA <span class="tag">Cuadro 6.2</span></h4>
+            <table class="conf-table">
+              <tr><td></td><th>Predicho: Fail</th><th>Predicho: Pass</th></tr>
+              <tr><th>Real: Fail</th><td class="diag">92</td><td class="off">3</td></tr>
+              <tr><th>Real: Pass</th><td class="off">6</td><td class="diag">49</td></tr>
+            </table>
+            <div class="conf-note">Error de clasificación: 6.00% · Accuracy: 94.00%</div>
+          </div>
+        </div>
+
+        <div class="two-col" style="margin-top:22px;">
+          <div class="card">
+            <h4>Curva ROC comparativa <span class="tag">réplica ilustrativa · Fig. 6.3</span></h4>
+            <div class="chart-wrap"><canvas id="chartRoc"></canvas></div>
+            <div class="conf-note">AUC LDA = 0.949 · AUC QDA = 0.987. Curvas trazadas para fines ilustrativos
+            replicando la forma reportada en el informe; ver el PDF para la curva exacta calculada sobre el
+            conjunto de prueba.</div>
+          </div>
+          <div class="card">
+            <h4>Predicción de un estudiante nuevo <span class="tag">Cuadro 6.5</span></h4>
+            <div class="chart-wrap"><canvas id="chartNewStudent"></canvas></div>
+            <div class="conf-note">Caso: 6 horas de estudio, nota previa = 75. LDA lo ubica casi en el límite
+            50/50; QDA, al capturar la curvatura real de la frontera, lo clasifica con más confianza como
+            <b>Pass</b> (62.1%).</div>
+          </div>
+        </div>
+
+        <h3>Lectura de las regiones de clasificación</h3>
+        <div class="prose">
+          <p>En el informe original (Figuras 6.4 y 6.5), la región de decisión de <b>LDA</b> es una línea recta
+          inclinada, porque el modelo lineal solo puede separar el plano con un hiperplano. La región de
+          <b>QDA</b>, en cambio, forma una frontera curva en “esquina” alrededor de la zona donde ambas
+          variables son altas — el mismo patrón de interacción observado en la exploración gráfica —, lo que
+          explica su ventaja de casi 9 puntos porcentuales de accuracy sobre LDA.</p>
+        </div>
+      </div>
+
+      <!-- Código -->
+      <div class="section">
+        <h2><span class="idx">1.3</span> Implementación — RStudio</h2>
+        <p class="kicker">Script principal en R utilizando el paquete <code>MASS</code>, siguiendo el
+        procedimiento de Fisher descrito en el marco teórico del informe.</p>
+
+        <div class="code-block">
+          <div class="code-head"><span>analisis_discriminante_estudiantes.R</span><div class="dots"><span></span><span></span><span></span></div></div>
+          <pre><code class="language-r"># Carga del dataset
+datos &lt;- read.csv("student_exam_data_new.csv", header = TRUE)
+names(datos) &lt;- c("study_hours", "prev_score", "pass_fail")
+datos$pass_fail &lt;- as.factor(datos$pass_fail)
+levels(datos$pass_fail) &lt;- c("Fail", "Pass")
+
+# Particion 70/30 con semilla fija para reproducibilidad
+set.seed(123)
+n &lt;- nrow(datos)
+idx_train &lt;- sample(seq_len(n), size = 0.7 * n)
+train &lt;- datos[idx_train, ]
+test  &lt;- datos[-idx_train, ]
+
+# Modelo LDA (asume covarianza comun entre clases)
+library(MASS)
+modelo_lda &lt;- lda(pass_fail ~ study_hours + prev_score, data = train)
+pred_lda   &lt;- predict(modelo_lda, newdata = test)
+
+# Matriz de confusion
+table(test$pass_fail, pred_lda$class,
+      dnn = c("Clase real", "Clase predicha"))
+
+# Modelo QDA (covarianza propia por clase -> frontera curva)
+modelo_qda &lt;- qda(pass_fail ~ study_hours + prev_score, data = train)
+pred_qda   &lt;- predict(modelo_qda, newdata = test)</code></pre>
+        </div>
+
+        <div class="step-note">
+          <b>Qué hace cada bloque:</b>
+          <ul>
+            <li><code>set.seed(123)</code> + <code>sample()</code> — fija la aleatoriedad para que la partición
+            70/30 sea reproducible entre ejecuciones.</li>
+            <li><code>lda(pass_fail ~ study_hours + prev_score, ...)</code> — estima los coeficientes de la
+            función discriminante de Fisher maximizando la razón entre variabilidad entre grupos y variabilidad
+            intra-grupos.</li>
+            <li><code>predict(modelo_lda, newdata = test)</code> — devuelve la clase predicha
+            (<code>$class</code>) y las probabilidades posteriores (<code>$posterior</code>) para cada
+            observación de prueba.</li>
+            <li><code>qda()</code> se llama con la misma fórmula, pero internamente estima una matriz de
+            covarianzas distinta por cada clase, en vez de una matriz agrupada (<i>pooled</i>).</li>
+          </ul>
+        </div>
+
+        <div class="code-block">
+          <div class="code-head"><span>evaluacion_roc_cv.R</span><div class="dots"><span></span><span></span><span></span></div></div>
+          <pre><code class="language-r">library(pROC)
+roc_lda &lt;- roc(test$pass_fail, pred_lda$posterior[, "Pass"])
+roc_qda &lt;- roc(test$pass_fail, pred_qda$posterior[, "Pass"])
+auc(roc_lda); auc(roc_qda)
+
+library(caret)
+lda_cv &lt;- train(pass_fail ~ study_hours + prev_score, data = datos,
+                 method = "lda",
+                 trControl = trainControl(method = "cv", number = 10))
+qda_cv &lt;- train(pass_fail ~ study_hours + prev_score, data = datos,
+                 method = "qda",
+                 trControl = trainControl(method = "cv", number = 10))</code></pre>
+        </div>
+        <div class="step-note">
+          <code>roc()</code> construye la curva ROC a partir de las probabilidades posteriores de la clase
+          "Pass"; <code>trainControl(method="cv", number=10)</code> configura una validación cruzada de 10
+          particiones que <code>caret::train()</code> ejecuta automáticamente para estimar el accuracy de
+          generalización de cada modelo (0.864 ± 0.079 para LDA, 0.936 ± 0.046 para QDA).
+        </div>
+
+        <h2 style="margin-top:36px;"><span class="idx">1.4</span> Implementación — Python</h2>
+        <p class="kicker">Réplica equivalente con <code>scikit-learn</code>, usada para validar de forma
+        cruzada los resultados obtenidos en R.</p>
+
+        <div class="code-block">
+          <div class="code-head"><span>analisis_discriminante_estudiantes.py</span><div class="dots"><span></span><span></span><span></span></div></div>
+          <pre><code class="language-python">import pandas as pd
+from sklearn.discriminant_analysis import (
+    LinearDiscriminantAnalysis as LDA,
+    QuadraticDiscriminantAnalysis as QDA,
+)
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, accuracy_score
+
+# Carga del dataset
+datos = pd.read_csv("student_exam_data_new.csv")
+datos.columns = ["study_hours", "prev_score", "pass_fail"]
+X = datos[["study_hours", "prev_score"]]
+y = datos["pass_fail"]
+
+# Particion 70/30 estratificada (mantiene la proporcion de clases)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=123, stratify=y
+)
+
+# Modelo LDA
+modelo_lda = LDA(solver="svd", store_covariance=True)
+modelo_lda.fit(X_train, y_train)
+clase_lda = modelo_lda.predict(X_test)
+
+# Modelo QDA
+modelo_qda = QDA(store_covariance=True)
+modelo_qda.fit(X_train, y_train)
+clase_qda = modelo_qda.predict(X_test)
+
+print("Accuracy LDA:", accuracy_score(y_test, clase_lda))
+print("Accuracy QDA:", accuracy_score(y_test, clase_qda))</code></pre>
+        </div>
+        <div class="step-note">
+          <code>stratify=y</code> asegura que la proporción 63.2%/36.8% de clases se mantenga tanto en train
+          como en test. <code>store_covariance=True</code> conserva las matrices de covarianza estimadas para
+          poder graficar después las regiones de decisión y el elipsoide de cada clase.
+        </div>
+
+        <div class="code-block">
+          <div class="code-head"><span>roc_y_cv.py</span><div class="dots"><span></span><span></span><span></span></div></div>
+          <pre><code class="language-python">from sklearn.metrics import roc_curve, auc
+from sklearn.model_selection import cross_val_score
+
+post_lda = modelo_lda.predict_proba(X_test)
+post_qda = modelo_qda.predict_proba(X_test)
+
+fpr_lda, tpr_lda, _ = roc_curve(y_test, post_lda[:, 1])
+fpr_qda, tpr_qda, _ = roc_curve(y_test, post_qda[:, 1])
+auc_lda = auc(fpr_lda, tpr_lda)
+auc_qda = auc(fpr_qda, tpr_qda)
+
+cv_lda = cross_val_score(LDA(), X, y, cv=10)
+cv_qda = cross_val_score(QDA(), X, y, cv=10)</code></pre>
+        </div>
+        <div class="step-note">
+          <code>predict_proba()</code> entrega la probabilidad posterior de cada clase; <code>roc_curve()</code>
+          barre todos los umbrales de decisión posibles para trazar la curva ROC completa, y
+          <code>cross_val_score(..., cv=10)</code> replica en Python la misma validación cruzada de 10
+          particiones usada en R, confirmando la consistencia entre ambos lenguajes.
+        </div>
+      </div>
+
+      <!-- PDF -->
+      <div class="section">
+        <h2><span class="idx">1.5</span> Documento original</h2>
+        <p class="kicker">Informe completo en PDF: marco teórico, anexos con el script íntegro y el dataset
+        utilizado.</p>
+        <div class="pdf-frame-wrap">
+          <div class="pdf-frame-head">
+            <span>ANALISIS_DISCRIMINANTE.pdf</span>
+            <a href="./ANALISIS_DISCRIMINANTE.pdf" target="_blank">Abrir en pestaña nueva ↗</a>
+          </div>
+          <iframe class="pdf-embed" src="./ANALISIS_DISCRIMINANTE.pdf" width="100%" height="600px"></iframe>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ======================================================= -->
+    <!-- VIEW 2 — REGRESIÓN LOGÍSTICA MÚLTIPLE                    -->
+    <!-- ======================================================= -->
+    <section class="view" id="view-logistica">
+
+      <div class="ledger">
+        <div class="eyebrow">Proyecto 02 · Estimación probabilística</div>
+        <h1>Regresión Logística Múltiple</h1>
+        <p class="lede">Estimación de la probabilidad de aprobar (Pass/Fail) en función de las horas de
+        estudio y la nota de un examen previo, interpretando los coeficientes en escala de <i>log-odds</i> y
+        de <i>odds ratio</i>.</p>
+
+        <div class="stamp-row">
+          <div class="stamp teal"><div class="v">86.0%</div><div class="l">Accuracy (test)</div></div>
+          <div class="stamp gold"><div class="v">0.951</div><div class="l">AUC — discriminación excelente</div></div>
+          <div class="stamp"><div class="v">OR 3.17</div><div class="l">Odds ratio · study_hours</div></div>
+          <div class="stamp"><div class="v">OR 1.14</div><div class="l">Odds ratio · prev_score</div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2><span class="idx">2.1</span> Resumen ejecutivo</h2>
+        <div class="prose">
+          <p>A diferencia del análisis discriminante, la regresión logística no asume normalidad multivariante
+          en los predictores: modela directamente la probabilidad del evento <code>pass_fail = 1</code>
+          mediante la función logística (sigmoide), garantizando que las predicciones caigan siempre en el
+          intervalo [0, 1]. Los parámetros se estiman por <b>máxima verosimilitud</b> con
+          <code>glm(family = binomial(link = "logit"))</code> en R, sobre el mismo dataset de 500 estudiantes
+          usado en el proyecto de discriminante.</p>
+
+          <p>El modelo final ajustado es:</p>
+          <div class="pill-list">
+            <div class="pill">logit(P) ≈ β₀ <b>+ 1.16</b>·study_hours <b>+ 0.13</b>·prev_score</div>
+          </div>
+
+          <p style="margin-top:14px;">Ambos coeficientes resultaron <b>estadísticamente significativos</b>
+          (p &lt; 0.001), con signo positivo: más horas de estudio y mejor nota previa aumentan la probabilidad
+          de aprobar. El diagnóstico del modelo no encontró problemas relevantes: el Factor de Inflación de
+          Varianza (VIF) fue cercano a 1 para ambos predictores (sin multicolinealidad), la prueba de
+          Hosmer–Lemeshow no rechazó la hipótesis de buen ajuste (p &gt; 0.05), y el Test de Razón de
+          Verosimilitud confirmó que el modelo completo mejora sustancialmente sobre el modelo nulo
+          (p &lt; 0.001).</p>
+        </div>
+
+        <div class="step-note">
+          <b>Interpretación en odds ratio:</b>
+          <ul>
+            <li>Por cada <b>hora adicional de estudio</b> (nota previa constante), el <i>odds</i> de aprobar
+            se multiplica por <b>≈3.17</b> (IC 95%: 2.42 – 4.16) — un incremento del 217%.</li>
+            <li>Por cada <b>punto adicional</b> en la nota previa (horas constantes), el <i>odds</i> de
+            aprobar se multiplica por <b>≈1.14</b> — un incremento del 14% por punto.</li>
+            <li>En términos relativos por unidad de medida, las horas de estudio tienen un efecto marginal
+            más pronunciado que la nota previa sobre las probabilidades de aprobar.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2><span class="idx">2.2</span> Resultados y gráficas interactivas</h2>
+
+        <div class="two-col">
+          <div class="card">
+            <h4>Forest plot — Odds Ratios (IC 95%) <span class="tag">Fig. 3.5</span></h4>
+            <div class="chart-wrap"><canvas id="chartForest"></canvas></div>
+            <div class="conf-note">Ambos intervalos quedan completamente a la derecha de OR = 1 (línea
+            punteada), confirmando la significancia estadística de los dos efectos.</div>
+          </div>
+          <div class="card">
+            <h4>Curva sigmoide — P(Pass) vs. Study Hours <span class="tag">Fig. 3.6 (aprox.)</span></h4>
+            <div class="chart-wrap"><canvas id="chartSigmoid"></canvas></div>
+            <div class="conf-note">Con prev_score fijo en su mediana (68.3). El logit cruza cero — P = 0.5 —
+            alrededor de las 7 horas de estudio.</div>
+          </div>
+        </div>
+
+        <div class="two-col" style="margin-top:22px;">
+          <div class="card">
+            <h4>Matriz de confusión (test, n=150) <span class="tag">Fig. 3.8</span></h4>
+            <table class="conf-table">
+              <tr><td></td><th>Predicho: Fail</th><th>Predicho: Pass</th></tr>
+              <tr><th>Real: Fail</th><td class="diag">85</td><td class="off">10</td></tr>
+              <tr><th>Real: Pass</th><td class="off">11</td><td class="diag">44</td></tr>
+            </table>
+            <div class="conf-note">Accuracy 86.0% · Sensibilidad (Pass) 80.0% · Especificidad (Fail) 89.5% ·
+            Precisión (Pass) 81.5%</div>
+          </div>
+          <div class="card">
+            <h4>Curva ROC <span class="tag">réplica ilustrativa · Fig. 3.9</span></h4>
+            <div class="chart-wrap"><canvas id="chartRocLog"></canvas></div>
+            <div class="conf-note">AUC = 0.951 — categoría "excelente" (AUC &gt; 0.9). Confirmado por
+            validación cruzada de 10 particiones.</div>
+          </div>
+        </div>
+
+        <h3>Mapa de probabilidad y frontera de decisión</h3>
+        <div class="prose">
+          <p>El mapa de probabilidad bidimensional (Figura 3.7 del informe) muestra una región roja de baja
+          probabilidad de aprobar en la esquina inferior izquierda (pocas horas de estudio, nota previa baja)
+          y una región azul de alta probabilidad en la esquina superior derecha. La frontera de decisión
+          (P = 0.5) resulta <b>aproximadamente lineal</b> — una diagonal —, coherente con la estructura
+          funcional de un modelo logístico con dos predictores continuos y sin términos de interacción, a
+          diferencia de la frontera curva observada en el proyecto de QDA.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2><span class="idx">2.3</span> Implementación en RStudio</h2>
+        <p class="kicker">Ajuste del modelo con <code>glm()</code>, diagnóstico de supuestos y evaluación
+        predictiva completa.</p>
+
+        <div class="code-block">
+          <div class="code-head"><span>regresion_logistica_multiple.R</span><div class="dots"><span></span><span></span><span></span></div></div>
+          <pre><code class="language-r">library(car); library(caret); library(pROC); library(lmtest)
+library(ResourceSelection)
+
+datos &lt;- read.csv("student_exam_data_new.csv", header = TRUE)
+names(datos) &lt;- c("study_hours", "prev_score", "pass_fail")
+datos$pass_fail &lt;- as.integer(datos$pass_fail)   # 0/1 para glm(binomial)
+
+# Particion 70/30 estratificada
+set.seed(123)
+idx &lt;- createDataPartition(datos$pass_fail, p = 0.70, list = FALSE)
+train &lt;- datos[idx, ]; test &lt;- datos[-idx, ]
+
+# Modelo nulo (solo intercepto) vs. modelo completo
+modelo_nulo &lt;- glm(pass_fail ~ 1, data = train, family = binomial(link = "logit"))
+modelo_full &lt;- glm(pass_fail ~ study_hours + prev_score,
+                    data = train, family = binomial(link = "logit"))
+summary(modelo_full)
+
+# Odds ratios con IC 95%
+exp(cbind(OR = coef(modelo_full), confint(modelo_full)))
+
+# Test de Razon de Verosimilitud
+lrtest(modelo_nulo, modelo_full)
+
+# Diagnostico: multicolinealidad y bondad de ajuste
+vif(modelo_full)
+hoslem.test(train$pass_fail, predict(modelo_full, type = "response"), g = 10)</code></pre>
+        </div>
+        <div class="step-note">
+          <b>Qué hace cada bloque:</b>
+          <ul>
+            <li><code>glm(..., family = binomial(link="logit"))</code> — ajusta el modelo por máxima
+            verosimilitud; el <code>link="logit"</code> es lo que aplica la transformación sigmoide.</li>
+            <li><code>exp(coef(modelo_full))</code> — convierte los coeficientes de log-odds a odds ratio,
+            que es la escala interpretable como "el odds se multiplica por...".</li>
+            <li><code>lrtest(modelo_nulo, modelo_full)</code> — compara la devianza de ambos modelos para
+            contrastar si las covariables mejoran significativamente el ajuste frente al modelo sin
+            predictores.</li>
+            <li><code>vif()</code> y <code>hoslem.test()</code> — verifican, respectivamente, ausencia de
+            multicolinealidad (VIF≈1) y bondad de ajuste global del modelo (p&gt;0.05 = buen ajuste).</li>
+          </ul>
+        </div>
+
+        <div class="code-block">
+          <div class="code-head"><span>evaluacion_predictiva.R</span><div class="dots"><span></span><span></span><span></span></div></div>
+          <pre><code class="language-r">prob_test &lt;- predict(modelo_full, newdata = test, type = "response")
+clase_pred &lt;- ifelse(prob_test &gt;= 0.5, 1, 0)
+
+cm &lt;- confusionMatrix(data = factor(clase_pred, labels = c("Fail","Pass")),
+                       reference = factor(test$pass_fail, labels = c("Fail","Pass")),
+                       positive = "Pass")
+
+roc_obj &lt;- roc(test$pass_fail, prob_test)
+auc(roc_obj)
+
+# Validacion cruzada de 10 particiones
+ctrl &lt;- trainControl(method = "cv", number = 10,
+                      classProbs = TRUE, summaryFunction = twoClassSummary)
+modelo_cv &lt;- train(factor(pass_fail, labels=c("Fail","Pass")) ~ study_hours + prev_score,
+                    data = datos, method = "glm", family = "binomial",
+                    trControl = ctrl, metric = "ROC")</code></pre>
+        </div>
+        <div class="step-note">
+          <code>type = "response"</code> devuelve directamente la probabilidad P(Pass) en lugar del logit;
+          el umbral <code>&gt;= 0.5</code> convierte esa probabilidad en una clase discreta para poder
+          construir la matriz de confusión con <code>confusionMatrix()</code>.
+        </div>
+      </div>
+
+      <div class="section">
+        <h2><span class="idx">2.4</span> Documento original</h2>
+        <p class="kicker">Informe completo: análisis exploratorio, diagnóstico de supuestos, forest plot de
+        odds ratios y script íntegro en anexo.</p>
+        <div class="pdf-frame-wrap">
+          <div class="pdf-frame-head">
+            <span>REGRESION_LOGISTICA_MULTIPLE.pdf</span>
+            <a href="./REGRESION_LOGISTICA_MULTIPLE.pdf" target="_blank">Abrir en pestaña nueva ↗</a>
+          </div>
+          <iframe class="pdf-embed" src="./REGRESION_LOGISTICA_MULTIPLE.pdf" width="100%" height="600px"></iframe>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ======================================================= -->
+    <!-- VIEW 3 — RECLASIFICACIÓN DE CLIENTES                     -->
+    <!-- ======================================================= -->
+    <section class="view" id="view-reclasificacion">
+
+      <div class="ledger">
+        <div class="eyebrow">Proyecto 03 · Caso aplicado — riesgo crediticio</div>
+        <h1>Reclasificación de Buenos Clientes con LDA</h1>
+        <p class="lede">Análisis Discriminante Lineal de tres grupos (B, A, A+) sobre la cartera de créditos
+        Cash de Compartamos: 114 clientes, 12 variables de comportamiento de pago y situación financiera.</p>
+
+        <div class="stamp-row">
+          <div class="stamp teal"><div class="v">62.28%</div><div class="l">Accuracy global (LOOCV)</div></div>
+          <div class="stamp"><div class="v">n = 114</div><div class="l">clientes, 3 categorías</div></div>
+          <div class="stamp gold"><div class="v">81.2%</div><div class="l">Varianza explicada por LD1</div></div>
+          <div class="stamp"><div class="v">12</div><div class="l">variables predictoras</div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2><span class="idx">3.1</span> Resumen ejecutivo</h2>
+        <div class="prose">
+          <p>Este es el único de los tres proyectos aplicado sobre <b>datos reales de una entidad
+          financiera</b> (no un dataset académico simulado): la cartera de créditos Cash de Compartamos, con
+          114 clientes activos calificados internamente como <b>B</b> (21.9%), <b>A</b> (53.5%) o
+          <b>A+</b> (24.6%). El propósito es doble: <b>explicativo</b> — entender qué variables de
+          comportamiento de pago separan mejor a los tres grupos —, y <b>reclasificador</b> — corroborar si
+          la calificación asignada por el analista de crédito es consistente con el comportamiento real del
+          cliente.</p>
+
+          <p>Se construyó un modelo LDA con <b>12 variables estandarizadas</b> (montos, mora, atrasos, número
+          de créditos vigentes, deuda en Compartamos y en la SBS, ingresos, egresos y resultado neto), tras
+          imputar como cero los valores faltantes en variables de atraso y deuda SBS (ausencia de registro =
+          ausencia real de esa condición). Al tratarse de 3 grupos, el modelo estima <b>2 funciones
+          discriminantes</b> (LD1 y LD2): LD1 concentra el 81.2% del poder de separación total, dominada por
+          <code>monto_aprobado</code>, <code>ingresos</code>, <code>n_empresas_sbs</code> y
+          <code>egresos</code>.</p>
+        </div>
+
+        <div class="step-note">
+          <b>Supuestos verificados — y no cumplidos:</b>
+          <ul>
+            <li><b>Normalidad univariante:</b> las 36 combinaciones variable×grupo evaluadas con
+            Shapiro-Wilk resultaron no normales (100%), esperable en datos financieros con colas pesadas
+            (montos, deudas, atrasos rara vez se distribuyen simétricamente).</li>
+            <li><b>Homogeneidad de covarianzas:</b> la prueba M de Box rechazó la hipótesis de igualdad de
+            matrices de covarianza entre los tres grupos (χ² = 1495.48, gl = 156, p &lt; 0.00001).</li>
+            <li><b>Decisión metodológica:</b> siguiendo el mismo criterio aplicado al dataset Iris en el
+            curso, se optó por <b>mantener el LDA</b> y reportar honestamente su desempeño real vía matriz
+            de confusión y LOOCV, en lugar de descartarlo automáticamente por incumplir supuestos formales.</li>
+            <li><b>Multicolinealidad:</b> se detectó correlación alta entre <code>ingresos</code> y
+            <code>egresos</code> (r = 0.96) y entre <code>deuda_compartamos</code> y <code>deuda_sbs</code>
+            (r = 0.75), lo que reduce la interpretabilidad individual de esos coeficientes.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2><span class="idx">3.2</span> Resultados y gráficas interactivas</h2>
+
+        <div class="two-col">
+          <div class="card">
+            <h4>Probabilidades previas por grupo <span class="tag">Cuadro 6.1</span></h4>
+            <div class="chart-wrap short"><canvas id="chartPriors"></canvas></div>
+          </div>
+          <div class="card">
+            <h4>Varianza explicada por función discriminante <span class="tag">Cuadro 6.2</span></h4>
+            <div class="chart-wrap short"><canvas id="chartEigen"></canvas></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:22px;">
+          <h4>Coeficientes estandarizados — LD1 <span class="tag">Cuadro 6.3 / Fig. 6.1</span></h4>
+          <div class="chart-wrap"><canvas id="chartLD1"></canvas></div>
+          <div class="conf-note">Barras positivas (verde) empujan hacia calificaciones más altas; barras
+          negativas (terracota) hacia calificaciones más bajas. <code>monto_aprobado</code> (+0.86) e
+          <code>ingresos</code> (+0.84) son los mayores impulsores positivos; <code>n_empresas_sbs</code>
+          (−0.69) y <code>egresos</code> (−0.62), los mayores negativos.</div>
+        </div>
+
+        <div class="two-col" style="margin-top:22px;">
+          <div class="card">
+            <h4>Matriz de confusión — LDA (training, n=114) <span class="tag">Cuadro 7.1</span></h4>
+            <table class="conf-table">
+              <tr><td></td><th>Pred: B</th><th>Pred: A</th><th>Pred: A+</th></tr>
+              <tr><th>Real: B</th><td class="diag">3</td><td class="off">20</td><td class="off">2</td></tr>
+              <tr><th>Real: A</th><td class="off">3</td><td class="diag">51</td><td class="off">7</td></tr>
+              <tr><th>Real: A+</th><td class="off">2</td><td class="off">9</td><td class="diag">17</td></tr>
+            </table>
+            <div class="conf-note">Training error 37.72% · Accuracy 62.28% · Error LOOCV también 62.28%
+            (sin sobreajuste)</div>
+          </div>
+          <div class="card">
+            <h4>Precisión por grupo <span class="tag">§7.2</span></h4>
+            <div class="chart-wrap"><canvas id="chartGroupAcc"></canvas></div>
+            <div class="conf-note">El grupo <b>B</b> es clasificado correctamente solo el 12.0% de las veces
+            (80% confundido con A): muchos clientes calificados B se comportan como clientes A.</div>
+          </div>
+        </div>
+
+        <h3>Espacio discriminante LD1 – LD2</h3>
+        <div class="prose">
+          <p>La proyección de los 114 clientes sobre el plano LD1–LD2 (Figura 7.2 del informe) muestra un
+          <b>solapamiento considerable</b> entre las elipses de concentración de los grupos A y A+, coherente
+          con el nivel de precisión moderado obtenido. El grupo B, aunque su elipse está desplazada hacia
+          valores más bajos de LD1, comparte una amplia zona común con el grupo A — el motivo estadístico
+          detrás de la principal fuente de error del modelo.</p>
+        </div>
+      </div>
+
+      <div class="section">
+        <h2><span class="idx">3.3</span> Implementación en RStudio</h2>
+        <p class="kicker">Pipeline completo: preparación de datos, verificación de supuestos, estimación del
+        modelo LDA multiclase y evaluación con LOOCV.</p>
+
+        <div class="code-block">
+          <div class="code-head"><span>reclasificacion_clientes.R</span><div class="dots"><span></span><span></span><span></span></div></div>
+          <pre><code class="language-r">library(readxl); library(MASS); library(dplyr)
+
+datos_raw &lt;- read_excel("data_clientes.xlsx", sheet = "rep_generacion_cash")
+
+datos &lt;- datos_raw %&gt;%
+  transmute(
+    especie = factor(cliente, levels = c("B", "A", "A+")),
+    monto_aprobado, mora_promedio, atraso_maximo, atraso_max_3m,
+    atraso_actual, n_creditos_vigentes, deuda_compartamos,
+    n_empresas_sbs, deuda_sbs, ingresos, egresos, resultado_neto
+  )
+
+# Imputacion: ausencia de registro = 0 (no es MCAR, es una condicion real)
+datos$atraso_actual[is.na(datos$atraso_actual)] &lt;- 0
+datos$n_empresas_sbs[is.na(datos$n_empresas_sbs)] &lt;- 0
+datos$deuda_sbs[is.na(datos$deuda_sbs)] &lt;- 0
+
+vars_pred &lt;- c("monto_aprobado","mora_promedio","atraso_maximo","atraso_max_3m",
+               "atraso_actual","n_creditos_vigentes","deuda_compartamos",
+               "n_empresas_sbs","deuda_sbs","ingresos","egresos","resultado_neto")
+
+# Estandarizacion z-score: hace comparables los coeficientes entre variables
+datos_z &lt;- datos
+datos_z[vars_pred] &lt;- scale(datos[vars_pred])
+
+# Modelo LDA con 3 grupos -> min(3-1, 12) = 2 funciones discriminantes
+modelo_lda &lt;- lda(especie ~ ., data = datos_z[, c("especie", vars_pred)])
+print(modelo_lda)</code></pre>
+        </div>
+        <div class="step-note">
+          <b>Qué hace cada bloque:</b>
+          <ul>
+            <li><code>scale(datos[vars_pred])</code> — estandariza cada variable a media 0 y desviación 1;
+            no cambia la clasificación resultante, pero vuelve comparables los coeficientes de las funciones
+            discriminantes (montos en soles vs. conteos en unidades).</li>
+            <li><code>lda(especie ~ ., ...)</code> con 3 niveles en <code>especie</code> produce
+            automáticamente <b>2</b> funciones discriminantes lineales (LD1, LD2), el máximo posible dado
+            por <code>min(n_grupos − 1, n_predictores)</code>.</li>
+          </ul>
+        </div>
+
+        <div class="code-block">
+          <div class="code-head"><span>verificacion_supuestos_y_evaluacion.R</span><div class="dots"><span></span><span></span><span></span></div></div>
+          <pre><code class="language-r"># Prueba M de Box (homogeneidad de matrices de covarianza)
+box_m_test &lt;- function(data, group) {
+  groups &lt;- split(data, group)
+  n_g &lt;- sapply(groups, nrow); p &lt;- ncol(data); n &lt;- sum(n_g); g &lt;- length(groups)
+  S_list &lt;- lapply(groups, function(d) cov(as.matrix(d)))
+  S_pooled &lt;- Reduce(`+`, Map(function(S, nj) S*(nj-1), S_list, n_g)) / (n-g)
+  log_det_pooled &lt;- determinant(S_pooled, logarithm = TRUE)$modulus
+  log_det_each &lt;- sapply(S_list, function(S) determinant(S, logarithm = TRUE)$modulus)
+  M &lt;- (n-g)*log_det_pooled - sum((n_g-1)*log_det_each)
+  c1 &lt;- ((sum(1/(n_g-1)) - 1/(n-g)) * (2*p^2+3*p-1)) / (6*(p+1)*(g-1))
+  df &lt;- (g-1)*p*(p+1)/2
+  chi_sq &lt;- M*(1-c1)
+  list(chi_sq = chi_sq, df = df, p_value = pchisq(chi_sq, df, lower.tail = FALSE))
+}
+box_result &lt;- box_m_test(datos[, vars_pred], datos$especie)
+
+# Evaluacion: training error y LOOCV
+predicciones &lt;- predict(modelo_lda, datos_z[, vars_pred])
+matriz_conf  &lt;- table(datos$especie, predicciones$class)
+training_error &lt;- mean(datos$especie != predicciones$class) * 100
+
+modelo_lda_cv &lt;- lda(especie ~ ., data = datos_z[, c("especie", vars_pred)], CV = TRUE)
+cv_error &lt;- mean(datos$especie != modelo_lda_cv$class) * 100</code></pre>
+        </div>
+        <div class="step-note">
+          <code>box_m_test()</code> implementa manualmente el estadístico M de Box (chi-cuadrado aproximado)
+          para contrastar si las tres clases comparten matriz de covarianzas — el supuesto central que
+          diferencia a LDA de QDA. <code>lda(..., CV = TRUE)</code> activa la validación cruzada
+          <b>Leave-One-Out</b>: cada cliente es clasificado con un modelo entrenado excluyéndolo, dando una
+          estimación del error menos optimista que el error de entrenamiento puro.
+        </div>
+      </div>
+
+      <div class="section">
+        <h2><span class="idx">3.4</span> Documento original</h2>
+        <p class="kicker">Informe completo: análisis exploratorio de las 12 variables, matriz de correlación,
+        verificación de supuestos, funciones discriminantes y código íntegro en anexo.</p>
+        <div class="pdf-frame-wrap">
+          <div class="pdf-frame-head">
+            <span>RECLASIFICACION_DE_CLIENTE.pdf</span>
+            <a href="./RECLASIFICACION_DE_CLIENTE.pdf" target="_blank">Abrir en pestaña nueva ↗</a>
+          </div>
+          <iframe class="pdf-embed" src="./RECLASIFICACION_DE_CLIENTE.pdf" width="100%" height="600px"></iframe>
+        </div>
+      </div>
+
+      <footer class="page-footer">
+        <span>Universidad Nacional del Altiplano — Puno, Perú · 2026</span>
+        <span>Curso: Aprendizaje Supervisado — Docente: Ing. Carpio Vargas, Edgar Eloy</span>
+      </footer>
+    </section>
+
+  </main>
+</div>
+
+<script>
+/* ============ NAVIGATION ============ */
+const links = document.querySelectorAll('.nav-link');
+const views = document.querySelectorAll('.view');
+const chartsInitialized = {};
+
+function goTo(name){
+  links.forEach(l => l.classList.toggle('active', l.dataset.view === name));
+  views.forEach(v => v.classList.toggle('active', v.id === 'view-' + name));
+  window.scrollTo({top:0, behavior:'instant'});
+  document.getElementById('sidebar').classList.remove('open');
+  initChartsFor(name);
+  history.replaceState(null, '', '#' + name);
+}
+
+links.forEach(l => {
+  l.addEventListener('click', (e) => {
+    e.preventDefault();
+    goTo(l.dataset.view);
+  });
+});
+
+document.getElementById('menuToggle')?.addEventListener('click', () => {
+  document.getElementById('sidebar').classList.toggle('open');
+});
+
+// deep-link on load
+const startView = (location.hash || '#inicio').replace('#','');
+if (['inicio','discriminante','logistica','reclasificacion'].includes(startView)) {
+  goTo(startView);
+} else {
+  initChartsFor('inicio');
+}
+
+/* ============ HIGHLIGHT.JS ============ */
+hljs.highlightAll();
+
+/* ============ CHART.JS GLOBAL STYLE ============ */
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.font.size = 11.5;
+Chart.defaults.color = '#6B6559';
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.boxWidth = 8;
+
+const COLORS = {
+  navy: '#12213B',
+  gold: '#C89B3C',
+  goldLight: '#E4C878',
+  terracotta: '#B0413E',
+  terracottaLight: 'rgba(176,65,62,0.35)',
+  teal: '#2F6F62',
+  tealLight: 'rgba(47,111,98,0.35)',
+  grid: 'rgba(18,33,59,0.08)'
+};
+
+function initChartsFor(view){
+  if (chartsInitialized[view]) return;
+  chartsInitialized[view] = true;
+
+  if (view === 'discriminante') buildDiscriminanteCharts();
+  if (view === 'logistica') buildLogisticaCharts();
+  if (view === 'reclasificacion') buildReclasificacionCharts();
+}
+
+/* ============ VIEW 1 CHARTS ============ */
+function buildDiscriminanteCharts(){
+
+  new Chart(document.getElementById('chartLdaQdaAccuracy'), {
+    type: 'bar',
+    data: {
+      labels: ['Test set (n=150)', 'CV 10-fold'],
+      datasets: [
+        { label:'LDA', data:[85.33, 86.4], backgroundColor: COLORS.navy, borderRadius:5, maxBarThickness:46 },
+        { label:'QDA', data:[94.00, 93.6], backgroundColor: COLORS.teal, borderRadius:5, maxBarThickness:46 }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      scales:{ y:{ min:70, max:100, grid:{color:COLORS.grid}, ticks:{callback:v=>v+'%'} }, x:{grid:{display:false}} },
+      plugins:{ legend:{position:'bottom'}, tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.raw+'%'}} }
+    }
+  });
+
+  new Chart(document.getElementById('chartLdaQdaRadar'), {
+    type:'radar',
+    data:{
+      labels:['Accuracy','Precisión','Recall','F1-score','AUC'],
+      datasets:[
+        { label:'LDA', data:[85.33,80,80,80,94.9], borderColor:COLORS.navy, backgroundColor:'rgba(18,33,59,0.12)', pointBackgroundColor:COLORS.navy },
+        { label:'QDA', data:[94.00,94,89,92,98.7], borderColor:COLORS.teal, backgroundColor:COLORS.tealLight, pointBackgroundColor:COLORS.teal }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{ r:{ min:60, max:100, grid:{color:COLORS.grid}, angleLines:{color:COLORS.grid}, ticks:{display:false} } },
+      plugins:{ legend:{position:'bottom'} }
+    }
+  });
+
+  new Chart(document.getElementById('chartRoc'), {
+    type:'line',
+    data:{
+      labels:[0,0.05,0.1,0.15,0.2,0.3,0.4,0.6,0.8,1],
+      datasets:[
+        { label:'LDA (AUC=0.949)', data:[0,0.55,0.72,0.83,0.88,0.93,0.96,0.98,0.99,1], borderColor:COLORS.navy, backgroundColor:'transparent', tension:.3, pointRadius:0, borderWidth:2 },
+        { label:'QDA (AUC=0.987)', data:[0,0.72,0.87,0.93,0.96,0.98,0.99,0.995,0.998,1], borderColor:COLORS.teal, backgroundColor:'transparent', tension:.3, pointRadius:0, borderWidth:2 },
+        { label:'Azar', data:[0,0.05,0.1,0.15,0.2,0.3,0.4,0.6,0.8,1], borderColor:'#B9AF8E', borderDash:[4,4], pointRadius:0, borderWidth:1.4 }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{ x:{ title:{display:true,text:'Tasa de Falsos Positivos'}, grid:{color:COLORS.grid} },
+               y:{ title:{display:true,text:'Tasa de Verdaderos Positivos'}, grid:{color:COLORS.grid} } },
+      plugins:{ legend:{position:'bottom'} }
+    }
+  });
+
+  new Chart(document.getElementById('chartNewStudent'), {
+    type:'bar',
+    data:{
+      labels:['LDA','QDA'],
+      datasets:[
+        { label:'P(Fail)', data:[50.00, 37.90], backgroundColor: COLORS.terracotta, borderRadius:5, maxBarThickness:50 },
+        { label:'P(Pass)', data:[49.99, 62.10], backgroundColor: COLORS.teal, borderRadius:5, maxBarThickness:50 }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      scales:{ x:{ min:0, max:100, grid:{color:COLORS.grid}, ticks:{callback:v=>v+'%'} }, y:{grid:{display:false}} },
+      plugins:{ legend:{position:'bottom'} }
+    }
+  });
+}
+
+/* ============ VIEW 2 CHARTS ============ */
+function buildLogisticaCharts(){
+
+  new Chart(document.getElementById('chartForest'), {
+    type:'bar',
+    data:{
+      labels:['study_hours', 'prev_score'],
+      datasets:[{
+        label:'IC 95% del Odds Ratio',
+        data:[[2.42,4.16act=>{}] , [1.02,1.27]].map(a=>[a[0],a[1]]),
+        backgroundColor: [COLORS.teal, COLORS.gold],
+        borderRadius:5,
+        barThickness: 26
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      scales:{ x:{ min:0.8, max:4.5, grid:{color:COLORS.grid}, title:{display:true,text:'Odds Ratio (IC 95%)'} }, y:{grid:{display:false}} },
+      plugins:{
+        legend:{display:false},
+        tooltip:{ callbacks:{ label:(c)=> 'IC95%: ['+c.raw[0]+' – '+c.raw[1]+']' } },
+        annotation:undefined
+      }
+    }
+  });
+
+  new Chart(document.getElementById('chartSigmoid'), (function(){
+    const b0=-17.0, b1=1.16, b2=0.13, ps=68.3;
+    const labels=[]; const data=[];
+    for(let sh=1; sh<=10; sh+=0.5){
+      const logit = b0 + b1*sh + b2*ps;
+      const p = 1/(1+Math.exp(-logit));
+      labels.push(sh.toFixed(1)); data.push((p*100).toFixed(1));
+    }
+    return {
+      type:'line',
+      data:{ labels, datasets:[
+        { label:'P(Pass) %', data, borderColor:COLORS.navy, backgroundColor:'rgba(18,33,59,0.08)', fill:true, tension:.35, pointRadius:0, borderWidth:2.4 }
+      ]},
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        scales:{ x:{ title:{display:true,text:'Study Hours'}, grid:{color:COLORS.grid} },
+                 y:{ min:0, max:100, title:{display:true,text:'P(Pass) %'}, grid:{color:COLORS.grid} } },
+        plugins:{ legend:{display:false} }
+      }
+    };
+  })());
+
+  new Chart(document.getElementById('chartRocLog'), {
+    type:'line',
+    data:{
+      labels:[0,0.05,0.1,0.15,0.2,0.25,0.4,0.6,0.8,1],
+      datasets:[
+        { label:'AUC = 0.951', data:[0,0.62,0.78,0.85,0.9,0.94,0.97,0.99,0.998,1], borderColor:COLORS.gold, backgroundColor:'rgba(200,155,60,0.12)', fill:true, tension:.3, pointRadius:0, borderWidth:2.4 },
+        { label:'Azar', data:[0,0.05,0.1,0.15,0.2,0.25,0.4,0.6,0.8,1], borderColor:'#B9AF8E', borderDash:[4,4], pointRadius:0, borderWidth:1.4 }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{ x:{ title:{display:true,text:'1 - Especificidad'}, grid:{color:COLORS.grid} },
+               y:{ title:{display:true,text:'Sensibilidad'}, grid:{color:COLORS.grid} } },
+      plugins:{ legend:{position:'bottom'} }
+    }
+  });
+}
+
+/* ============ VIEW 3 CHARTS ============ */
+function buildReclasificacionCharts(){
+
+  new Chart(document.getElementById('chartPriors'), {
+    type:'doughnut',
+    data:{
+      labels:['B (21.9%)','A (53.5%)','A+ (24.6%)'],
+      datasets:[{ data:[21.9,53.5,24.6], backgroundColor:[COLORS.terracotta, COLORS.gold, COLORS.teal], borderWidth:2, borderColor:'#fff' }]
+    },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{position:'bottom'} }, cutout:'62%' }
+  });
+
+  new Chart(document.getElementById('chartEigen'), {
+    type:'doughnut',
+    data:{
+      labels:['LD1 (81.2%)','LD2 (18.8%)'],
+      datasets:[{ data:[81.2,18.8], backgroundColor:[COLORS.navy, COLORS.goldLight], borderWidth:2, borderColor:'#fff' }]
+    },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{position:'bottom'} }, cutout:'62%' }
+  });
+
+  const ld1labels = ['monto_aprobado','ingresos','atraso_maximo','n_creditos_vigentes','deuda_compartamos','mora_promedio','atraso_actual','atraso_max_3m','resultado_neto','egresos','deuda_sbs','n_empresas_sbs'];
+  const ld1values = [0.862,0.837,0.321,0.156,0.131,0.027,-0.118,-0.457,-0.573,-0.624,-0.616,-0.692];
+  new Chart(document.getElementById('chartLD1'), {
+    type:'bar',
+    data:{
+      labels: ld1labels,
+      datasets:[{
+        data: ld1values,
+        backgroundColor: ld1values.map(v => v>=0 ? COLORS.teal : COLORS.terracotta),
+        borderRadius:4
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, indexAxis:'y',
+      scales:{ x:{ min:-0.8, max:1, grid:{color:COLORS.grid} }, y:{ grid:{display:false} } },
+      plugins:{ legend:{display:false} }
+    }
+  });
+
+  new Chart(document.getElementById('chartGroupAcc'), {
+    type:'bar',
+    data:{
+      labels:['B (n=25)','A (n=61)','A+ (n=28)'],
+      datasets:[{ label:'% correctamente clasificado', data:[12.0,83.6,60.7], backgroundColor:[COLORS.terracotta, COLORS.teal, COLORS.gold], borderRadius:6, maxBarThickness:60 }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      scales:{ y:{ min:0, max:100, grid:{color:COLORS.grid}, ticks:{callback:v=>v+'%'} }, x:{grid:{display:false}} },
+      plugins:{ legend:{display:false} }
+    }
+  });
+}
+</script>
+</body>
+</html>
